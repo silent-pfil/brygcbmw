@@ -86,7 +86,7 @@ Sometimes the most interesting things appear when you don’t force them to repr
 *[brygcbmw](https://silent-pfil.github.io/brygcbmw/)* 
 
 
-*[bw](https://silent-pfil.github.io/brygcbmw/bw/)*
+*[bw](https://silent-pfil.github.io/brygcbmw/bw)*
 
 
 ---
