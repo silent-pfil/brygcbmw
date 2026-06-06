@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BW Continuous Sequence</title>
+    <style>
+        body { margin: 0; background: #111; color: white; font-family: monospace; overflow: hidden; }
+        canvas { display: block; image-rendering: pixelated; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.85);
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        button {
+            padding: 10px 16px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div>Repeat per color: <span id="size">1</span></div>
+        <div>← ↓ decrease | → ↑ increase (hold for fast)</div>
+        <div>Continuous wrap — Black & White</div>
+        <button id="playBtn">Play Auto (1s)</button>
+        <button onclick="saveImage()">Save PNG</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const infoSize = document.getElementById('size');
+        const playBtn = document.getElementById('playBtn');
+
+        const width = 1920;
+        const height = 1080;
+        canvas.width = width;
+        canvas.height = height;
+
+        let repeatPerColor = 1;
+        let isPlaying = false;
+        let autoInterval = null;
+
+        const colors = ['#000000', '#FFFFFF']; // Black, White
+
+        function draw() {
+            let pixelIndex = 0;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const blockIndex = Math.floor(pixelIndex / repeatPerColor);
+                    const colorIndex = blockIndex % colors.length;
+                    ctx.fillStyle = colors[colorIndex];
+                    ctx.fillRect(x, y, 1, 1);
+                    pixelIndex++;
+                }
+            }
+            infoSize.textContent = repeatPerColor;
+        }
+
+        // Keyboard control
+        let keys = {};
+        document.addEventListener('keydown', e => { keys[e.key] = true; });
+        document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        function handleInput() {
+            if (keys['ArrowRight'] || keys['ArrowUp']) {
+                repeatPerColor = Math.min(repeatPerColor + 1, 2000);
+                draw();
+            }
+            if (keys['ArrowLeft'] || keys['ArrowDown']) {
+                repeatPerColor = Math.max(1, repeatPerColor - 1);
+                draw();
+            }
+        }
+        setInterval(() => { if (Object.values(keys).some(v => v)) handleInput(); }, 16);
+
+        // Auto Play - 1 second per step
+        function toggleAuto() {
+            isPlaying = !isPlaying;
+            playBtn.textContent = isPlaying ? "Pause Auto" : "Play Auto (1s)";
+            
+            if (isPlaying) {
+                autoInterval = setInterval(() => {
+                    repeatPerColor = Math.min(repeatPerColor + 1, 2000);
+                    draw();
+                }, 1000);
+            } else {
+                clearInterval(autoInterval);
+            }
+        }
+
+        function saveImage() {
+            const link = document.createElement('a');
+            link.download = `bw_continuous_${repeatPerColor}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        playBtn.addEventListener('click', toggleAuto);
+
+        draw(); // initial draw
+    </script>
+</body>
+</html>
