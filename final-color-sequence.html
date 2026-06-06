@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continuous Color Sequence - Auto Play</title>
+    <style>
+        body { margin: 0; background: #111; color: white; font-family: monospace; overflow: hidden; }
+        canvas { display: block; image-rendering: pixelated; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        button {
+            padding: 8px 14px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div>Repeat per color: <span id="size">1</span></div>
+        <div>← ↓ decrease | → ↑ increase (hold for fast)</div>
+        <div>Continuous wrap across rows like text</div>
+        <button id="playBtn">Play Auto</button>
+        <button id="slowBtn">Slow (2s)</button>
+        <button id="fastBtn">Fast (0.5s)</button>
+        <button onclick="saveImage()">Save PNG</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const infoSize = document.getElementById('size');
+        const playBtn = document.getElementById('playBtn');
+        const slowBtn = document.getElementById('slowBtn');
+        const fastBtn = document.getElementById('fastBtn');
+
+        const width = 1920;
+        const height = 1080;
+        canvas.width = width;
+        canvas.height = height;
+
+        let repeatPerColor = 1;
+        let isPlaying = false;
+        let autoInterval = null;
+        let autoSpeed = 2000; // default 2 seconds
+
+        const colors = [
+            '#000000', '#FF0000', '#FFFF00', '#00FF00',
+            '#00FFFF', '#0000FF', '#FF00FF', '#FFFFFF'
+        ];
+
+        function draw() {
+            let pixelIndex = 0;
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const blockIndex = Math.floor(pixelIndex / repeatPerColor);
+                    const colorIndex = blockIndex % colors.length;
+                    ctx.fillStyle = colors[colorIndex];
+                    ctx.fillRect(x, y, 1, 1);
+                    pixelIndex++;
+                }
+            }
+            infoSize.textContent = repeatPerColor;
+        }
+
+        // Manual keyboard control
+        let keys = {};
+        document.addEventListener('keydown', e => { keys[e.key] = true; });
+        document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        function handleManualInput() {
+            let changed = false;
+            if (keys['ArrowRight'] || keys['ArrowUp']) {
+                repeatPerColor = Math.min(repeatPerColor + 1, 2000);
+                changed = true;
+            }
+            if (keys['ArrowLeft'] || keys['ArrowDown']) {
+                repeatPerColor = Math.max(1, repeatPerColor - 1);
+                changed = true;
+            }
+            if (changed) draw();
+        }
+
+        setInterval(() => {
+            if (Object.values(keys).some(v => v)) handleManualInput();
+        }, 16);
+
+        // Auto Play
+        function startAuto() {
+            if (autoInterval) clearInterval(autoInterval);
+            autoInterval = setInterval(() => {
+                repeatPerColor = Math.min(repeatPerColor + 1, 2000);
+                draw();
+            }, autoSpeed);
+        }
+
+        function toggleAuto() {
+            isPlaying = !isPlaying;
+            playBtn.textContent = isPlaying ? "Pause Auto" : "Play Auto";
+            
+            if (isPlaying) {
+                startAuto();
+            } else {
+                clearInterval(autoInterval);
+            }
+        }
+
+        function setSpeed(ms) {
+            autoSpeed = ms;
+            if (isPlaying) {
+                startAuto(); // restart with new speed
+            }
+        }
+
+        function saveImage() {
+            const link = document.createElement('a');
+            link.download = `continuous_color_repeat_${repeatPerColor}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        playBtn.addEventListener('click', toggleAuto);
+        slowBtn.addEventListener('click', () => setSpeed(2000));
+        fastBtn.addEventListener('click', () => setSpeed(500));
+
+        draw(); // initial draw
+    </script>
+</body>
+</html>
