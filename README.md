@@ -83,7 +83,7 @@ Sometimes the most interesting things appear when you don’t force them to repr
 
 ### Try it live
 
-*(link to GitHub Pages)*
+*[brygcbmw](https://silent-pfil.github.io/brygcbmw/*
 
 
 
